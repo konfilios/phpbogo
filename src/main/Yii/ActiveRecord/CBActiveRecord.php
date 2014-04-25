@@ -433,4 +433,25 @@ class CBActiveRecord extends CActiveRecord
 			throw $ex;
 		}
 	}
+
+	/**
+	 * FindByPk() or throw a not found exception.
+	 *
+	 * @param mixed $pk
+	 * @return static
+	 * @throws CException
+	 */
+	public function findByPkOrThrow($pk)
+	{
+		$model = $this->findByPk($pk);
+
+		if (!$model) {
+			throw new CException(Yii::t('CBActiveRecord',
+				get_class($this).' with id "{pk}" was not found', array(
+					'{pk}' => $pk,
+				)));
+		}
+		
+		return $model;
+	}
 }

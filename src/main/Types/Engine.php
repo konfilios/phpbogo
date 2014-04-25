@@ -19,8 +19,8 @@ class Engine
 	static private function getUtcDatetime()
 	{
 		if (self::$utcDatetime === null) {
-			self::$utcDatetime = new DateTime();
-			self::$utcDatetime->setTimezone(new DateTimeZone('UTC'));
+			self::$utcDatetime = new \DateTime();
+			self::$utcDatetime->setTimezone(new \DateTimeZone('UTC'));
 		}
 
 		return self::$utcDatetime;

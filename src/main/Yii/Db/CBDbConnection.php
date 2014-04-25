@@ -80,4 +80,94 @@ class CBDbConnection extends CDbConnection
 			return parent::createCommand($query);
 		}
 	}
+
+	private $_transaction;
+
+	/**
+	 * Returns the currently active transaction.
+	 * @return CDbTransaction the currently active transaction. Null if no active transaction.
+	 */
+	public function getCurrentTransaction()
+	{
+		if($this->_transaction!==null)
+		{
+			if($this->_transaction->getActive())
+				return $this->_transaction;
+		}
+		return null;
+	}
+
+	/**
+	 * Starts a transaction.
+	 * @return CDbTransaction the transaction initiated
+	 */
+	public function beginTransaction()
+	{
+		Yii::trace('Starting transaction','system.db.CDbConnection');
+		$this->setActive(true);
+		$this->getPdoInstance()->beginTransaction();
+		return $this->_transaction=new CBDbTransaction($this);
+	}
+
+	/**
+	 * Run $func within the transaction.
+	 *
+	 * @param callable $func User code to be run within the transaction.
+	 * @return mixed $func's return value or true.
+	 * @throws Exception
+	 */
+	public function runTransaction($func)
+	{
+		return $this->beginTransaction()->run($func);
+	}
+
+	private $lastTransactionCommited = null;
+
+	/**
+	 * A transaction was commited.
+	 *
+	 * @param CEvent $event
+	 */
+	public function clearLastTransaction()
+	{
+		if ($this->lastTransactionCommited === null) {
+			return;
+		} else {
+			$event = new CEvent($this, array('commited'=>$this->lastTransactionCommited));
+			$this->lastTransactionCommited = null;
+			$this->onClearLastTransaction($event);
+		}
+	}
+
+	/**
+	 * A transaction was commited.
+	 *
+	 * @param CEvent $event
+	 */
+	public function onClearLastTransaction(CEvent $event)
+	{
+		$this->raiseEvent('onClearLastTransaction', $event);
+	}
+
+	/**
+	 * A transaction was commited.
+	 *
+	 * @param CEvent $event
+	 */
+	public function onCommitTransaction(CEvent $event)
+	{
+		$this->lastTransactionCommited = true;
+		$this->raiseEvent('onCommitTransaction', $event);
+	}
+
+	/**
+	 * A transaction was rolled back.
+	 *
+	 * @param CEvent $event
+	 */
+	public function onRollbackTransaction(CEvent $event)
+	{
+		$this->lastTransactionCommited = false;
+		$this->raiseEvent('onRollbackTransaction', $event);
+	}
 }

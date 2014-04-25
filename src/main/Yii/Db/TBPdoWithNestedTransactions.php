@@ -9,20 +9,30 @@
 trait TBPdoWithNestedTransactions
 {
 
-	private $transactionIsolationLevel = null;
+	private $_transactionIsolationLevel = null;
 
 	/**
 	 * Transaction is still referenced but has been rolled back.
 	 *
 	 * @var boolean
 	 */
-	private $isTransactionRolledBack = false;
+	private $_isTransactionRolledBack = false;
 
 	/**
 	 * Nesting level of current transaction.
 	 * @var integer
 	 */
-	private $transactionRefcount = 0;
+	private $_transactionRefcount = 0;
+
+	/**
+	 * Return transaction ref count.
+	 *
+	 * @return integer
+	 */
+	public function getTransactionRefCount()
+	{
+		return $this->_transactionRefcount;
+	}
 
 	/**
 	 * Set transaction isolation level.
@@ -31,11 +41,11 @@ trait TBPdoWithNestedTransactions
 	 */
 	public function setTransactionIsolationLevel($isolationLevel)
 	{
-		if ($this->transactionIsolationLevel === null) {
-			$this->transactionIsolationLevel = $isolationLevel;
+		if ($this->_transactionIsolationLevel === null) {
+			$this->_transactionIsolationLevel = $isolationLevel;
 			$this->exec('SET TRANSACTION ISOLATION LEVEL '.$isolationLevel);
 
-		} else if ($this->transactionIsolationLevel != $isolationLevel) {
+		} else if ($this->_transactionIsolationLevel != $isolationLevel) {
 			throw new CDbException("Transaction isolation level can't be changed while a transaction is in progress");
 		}
 	}
@@ -45,13 +55,13 @@ trait TBPdoWithNestedTransactions
 	 */
 	public function beginTransaction()
 	{
-		if ($this->transactionRefcount === 0) {
+		if ($this->_transactionRefcount === 0) {
 			// No transaction active so far
 			parent::beginTransaction();
 		}
 
 		// Increase refcount
-		$this->transactionRefcount++;
+		$this->_transactionRefcount++;
 	}
 
 	/**
@@ -60,13 +70,13 @@ trait TBPdoWithNestedTransactions
 	public function commit()
 	{
 		// One less is referencing this transaction
-		$this->transactionRefcount--;
+		$this->_transactionRefcount--;
 
-		if (($this->transactionRefcount === 0) && !$this->isTransactionRolledBack) {
+		if (($this->_transactionRefcount === 0) && !$this->_isTransactionRolledBack) {
 			// Nobody is referencing the transaction and it has not failed.
 			// It's time we commit
 			parent::commit();
-			$this->transactionIsolationLevel = null;
+			$this->_transactionIsolationLevel = null;
 		}
 	}
 
@@ -76,21 +86,21 @@ trait TBPdoWithNestedTransactions
 	public function rollback()
 	{
 		// One less is referencing this transaction
-		$this->transactionRefcount--;
+		$this->_transactionRefcount--;
 
-		if (!$this->isTransactionRolledBack) {
+		if (!$this->_isTransactionRolledBack) {
 			// We have not rolled back yet. Rollback now instead of waiting for
 			// refcount to reach 0 to avoid "leaks".
 			// Try-and-catch is suggested in http://support.microsoft.com/kb/309335
 			try {
 				parent::rollBack();
-				$this->transactionIsolationLevel = null;
+				$this->_transactionIsolationLevel = null;
 			} catch (Exception $e) {
 				// Gargara
 			}
 		}
 
 		// Mark as rolled back for as long as somebody is referencing this transaction
-		$this->isTransactionRolledBack = ($this->transactionRefcount > 0);
+		$this->_isTransactionRolledBack = ($this->_transactionRefcount > 0);
 	}
 }

@@ -68,6 +68,13 @@ class CBMailerSwift extends CBMailer
 	public $sendmailCommand = '/usr/bin/sendmail -t';
 
 	/**
+	 * Path alias of library.
+	 *
+	 * @var string
+	 */
+	public $libPathAlias;
+
+	/**
 	 * CApplicationComponent initialization.
 	 */
 	public function init()
@@ -76,7 +83,7 @@ class CBMailerSwift extends CBMailer
 
 		// Fix Swift autoloader
 		spl_autoload_unregister(array('YiiBase', 'autoload'));
-		require_once(dirname(__FILE__).'/../vendors/Swift-5.0.0/lib/swift_required.php');
+		require_once(Yii::getPathOfAlias($this->libPathAlias).DIRECTORY_SEPARATOR.'swift_required.php');
 		spl_autoload_register(array('YiiBase', 'autoload'));
 	}
 
@@ -118,7 +125,7 @@ class CBMailerSwift extends CBMailer
 				'subject' => $message->subject,
 				'body' => $message->body,
 				'contentType' => $message->contentType
-			), true), 'bogo-yii-mailer.CBMailerNativePhpMail');
+			), true), 'bogo-yii-mailer.CBMailerSwift');
 
 			return true;
 		} else {

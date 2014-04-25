@@ -11,6 +11,10 @@ namespace Bogo\Yii\Chat;
  */
 class Service extends \CApplicationComponent
 {
+	
+	public $messageModelClass = 'ChatMessage';
+	public $nodeModelClass = 'ChatNode';
+
 	/**
 	 * Create a new message and corresponding thread nodes.
 	 *
@@ -23,7 +27,9 @@ class Service extends \CApplicationComponent
 	{
 		// Row lock contention probability for all the following queries
 		// is low since they are of interest for only two users (sender and recipient)
-		$trn = Message::model()->dbConnection->beginTransaction();
+		$messageModelClass = $this->messageModelClass;
+		$nodeModelClass = $this->nodeModelClass;
+		$trn = $messageModelClass::model()->dbConnection->beginTransaction();
 
 		// Prepare nodes
 		$newNodesData = array(
@@ -45,7 +51,7 @@ class Service extends \CApplicationComponent
 		try {
 			// Mark previously terminal nodes as non-terminal in O(2) update queries
 			foreach ($newNodesData as $masterUserId=>$nodeData) {
-				Node::model()->updateAll(array(
+				$nodeModelClass::model()->updateAll(array(
 					'isTerminal' => 0
 				), 'masterUserId = :masterUserId AND slaveUserId = :slaveUserId AND isTerminal = 1', array(
 					':masterUserId' => $masterUserId,
@@ -54,22 +60,22 @@ class Service extends \CApplicationComponent
 			}
 
 			// Create new message in O(1) insert queries
-			$new_message = new Message();
-			$new_message->senderUserId = $senderUserId;
-			$new_message->recipientUserId = $recipientUserId;
-			$new_message->body = $body;
-			$new_message->createdUdatetime = $new_message->stampToUdatetime();
+			$newMessage = new $messageModelClass();
+			$newMessage->senderUserId = $senderUserId;
+			$newMessage->recipientUserId = $recipientUserId;
+			$newMessage->body = $body;
+			$newMessage->createdUdatetime = $newMessage->stampToUdatetime();
 
-			$new_message->saveOrThrow();
+			$newMessage->saveOrThrow();
 
 			// Create new nodes in O(2) insert queries
 			foreach ($newNodesData as $masterUserId=>$nodeData) {
 
 				// Create sender node
-				$node = new Node();
+				$node = new $nodeModelClass();
 				$node->masterUserId = $masterUserId;
 				$node->slaveUserId = $nodeData['slaveUserId'];
-				$node->messageId = $new_message->messageId;
+				$node->messageId = $newMessage->id;
 				$node->isIncoming = $nodeData['isIncoming'];
 				$node->isNew = $nodeData['isNew'];
 				$node->isTerminal = 1;
@@ -92,11 +98,13 @@ class Service extends \CApplicationComponent
 	 * @param integer $slaveUserId Slave user who has received the messages.
 	 * @return boolean
 	 */
-	public function markAllMessagesSentToUserAsNotNew($slaveUserId)
+	public function markAllMessagesSentFromUserAsNotNew($masterUserId, $slaveUserId)
 	{
-		return Node::model()->updateAll(array(
+		$nodeModelClass = $this->nodeModelClass;
+		return $nodeModelClass::model()->updateAll(array(
 			'isNew' => 0
-		), 'slaveUserId = :slaveUserId AND isIncoming = 1 AND isNew = 1', array(
+		), ':masterUserId = :masterUserId AND slaveUserId = :slaveUserId AND isIncoming = 1 AND isNew = 1', array(
+			':masterUserId' => $masterUserId,
 			':slaveUserId' => $slaveUserId
 		));
 	}
@@ -110,7 +118,8 @@ class Service extends \CApplicationComponent
 	 */
 	public function removeThreadWithUser($masterUserId, $slaveUserId)
 	{
-		return Node::model()->deleteAllByAttributes(array(
+		$nodeModelClass = $this->nodeModelClass;
+		return $nodeModelClass::model()->deleteAllByAttributes(array(
 			'masterUserId' => $masterUserId,
 			'slaveUserId' => $slaveUserId
 		));
@@ -124,14 +133,15 @@ class Service extends \CApplicationComponent
 	 */
 	public function removeMessageByNodeId($deletedNodeId)
 	{
-		$dbConnection = Node::model()->dbConnection;
+		$nodeModelClass = $this->nodeModelClass;
+		$dbConnection = $nodeModelClass::model()->dbConnection;
 
 		$dbConnection->setTransactionIsolationLevel('SERIALIZABLE');
 		$trn = $dbConnection->beginTransaction();
 
 		try {
 			// Load node to delete
-			$deletedNode = Node::model()->findByPk($deletedNodeId); /* @var $deletedNode Node */
+			$deletedNode = $nodeModelClass::model()->findByPk($deletedNodeId); /* @var $deletedNode Node */
 
 			if (empty($deletedNode)) {
 				throw new CException('Node with id '.$deletedNodeId.' not found');
@@ -142,7 +152,7 @@ class Service extends \CApplicationComponent
 
 			if ($deletedNode->isTerminal) {
 				// Node was terminal. We have to replace it with another terminal
-				$newTerminalNode = Node::model()
+				$newTerminalNode = $nodeModelClass::model()
 					->scopeOrderBy('nodeId DESC')
 					->findByAttributes(array(
 						'masterUserId' => $deletedNode->masterUserId,
@@ -175,7 +185,8 @@ class Service extends \CApplicationComponent
 	 */
 	public function getReceivedUnreadMessageCount($masterUserId)
 	{
-		return Node::model()
+		$nodeModelClass = $this->nodeModelClass;
+		return $nodeModelClass::model()
 			->countByAttributes(array(
 				'masterUserId' => $masterUserId,
 				'isNew' => 1
@@ -191,9 +202,10 @@ class Service extends \CApplicationComponent
 	 */
 	public function findAllMessagesWithUser($masterUserId, $slaveUserId)
 	{
-		return Node::model()
+		$nodeModelClass = $this->nodeModelClass;
+		return $nodeModelClass::model()
 			->with('message')
-			->scopeOrderBy('id DESC')
+			->scopeOrderBy('t.id DESC')
 			->findAllByAttributes(array(
 				'masterUserId' => $masterUserId,
 				'slaveUserId' => $slaveUserId,
@@ -209,7 +221,8 @@ class Service extends \CApplicationComponent
 	 */
 	public function findLatestMessageReceivedByUser($recipientUserId, $senderUserId)
 	{
-		return Node::model()
+		$nodeModelClass = $this->nodeModelClass;
+		return $nodeModelClass::model()
 			->with('message')
 			->scopeOrderBy('id DESC')
 			->findByAttributes(array(
@@ -227,8 +240,10 @@ class Service extends \CApplicationComponent
 	 */
 	public function findAllLatestTerminalMessages($masterUserId)
 	{
-		return Node::model()
-			->scopeOrderBy('id DESC')
+		$nodeModelClass = $this->nodeModelClass;
+		return $nodeModelClass::model()
+			->with('message')
+			->scopeOrderBy('t.id DESC')
 			->findAllByAttributes(array(
 				'masterUserId' => $masterUserId,
 				'isTerminal' => 1
