@@ -1,0 +1,66 @@
+{
+	"attributeTypes": [
+		{
+			"signature" : {
+				"id": "StringFreeShortText"
+			},
+			"superType": {
+				"id" : "String"
+			}
+		},
+		{
+			"signature" : {
+				"id": "IntegerYesNo"
+			},
+			"superType": {
+				"id" : "IntegerEnum"
+			},
+			"params" : {
+				"enumOptions" : {
+					"1" : "Ναι",
+					"0" : "Όχι"
+				}
+			}
+		}
+	],
+	"attributes": {
+		"1. 3D": {
+			"type" : {
+				"id": "Boolean"
+			}
+		},
+		"2. Αναλογικό - Ψηφιακό": {
+			"typeSignature" : {
+				"id": "IntegerAnalogDigital"
+			},
+			"constraints" : [
+				{
+					"type": "NotEmpty"
+				}
+			]
+		},
+		"3. Αναλογικό-Ψηφιακο": {
+			"type" : {
+				"id": "List",
+				"elementType": {
+					"id": "IntegerAnalogDigital"
+				}
+			},
+			"constraints" : [
+				{
+					"type": "Size",
+					"min" : 0,
+					"max" : 10
+				}
+			]
+		},
+		"4. Τάση Λειτουργίας": {
+			"type" : {
+				"id": "Vector2",
+				"elementType" : {
+					"id": "Integer"
+				}
+			}
+		}
+	}
+}

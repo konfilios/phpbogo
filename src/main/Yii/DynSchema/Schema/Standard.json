@@ -1,0 +1,107 @@
+{
+	"attributeTypes": [
+		{
+			"signature" : {
+				"id": "List"
+			},
+			"scenaria" : {
+				"View" : {
+					"widget": {
+						"id" : "ViewRawValueList",
+						"params" : {
+							"elementSeparator" : "<br />"
+						}
+					}
+				},
+				"Input": {
+					"widget": {
+						"id" : "InputTextFieldList",
+						"params" : {
+							"elementSeparator" : "<br />"
+						}
+					}
+				}
+			}
+		},
+		{
+			"signature" : {
+				"id": "Integer"
+			},
+			"valueDatatype" : {
+				"id" : "Integer"
+			},
+			"scenaria" : {
+				"View" : {
+					"widget": {
+						"id" : "ViewRawValue"
+					}
+				},
+				"Input": {
+					"widget": {
+						"id" : "InputTextField"
+					}
+				}
+			}
+		},
+		{
+			"signature" : {
+				"id": "String"
+			},
+			"valueDatatype" : {
+				"id" : "String"
+			},
+			"scenaria" : {
+				"View" : {
+					"widget": {
+						"id" : "ViewRawValue"
+					}
+				},
+				"Input": {
+					"widget": {
+						"id" : "InputTextField"
+					}
+				}
+			}
+		},
+		{
+			"signature" : {
+				"id": "IntegerEnum"
+			},
+			"superType": {
+				"id" : "Integer"
+			},
+			"scenaria" : {
+				"View" : {
+					"widget": {
+						"id" : "ViewEnumValue"
+					}
+				},
+				"Input": {
+					"widget": {
+						"id" : "InputDropDownField"
+					}
+				}
+			}
+		},
+		{
+			"signature" : {
+				"id": "List",
+				"elementType" : {
+					"id": "IntegerEnum"
+				}
+			},
+			"scenaria" : {
+				"View" : {
+					"widget": {
+						"id" : "ViewEnumValueList"
+					}
+				},
+				"Input": {
+					"widget": {
+						"id" : "InputMultiDropDownField"
+					}
+				}
+			}
+		}
+	]
+}
