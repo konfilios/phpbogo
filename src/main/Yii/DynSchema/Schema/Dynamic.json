@@ -1,0 +1,45 @@
+{
+    "attributeTypes": [
+        {
+            "signature": {
+                "id": "19"
+            },
+            "superType": {
+                "id": "IntegerEnum"
+            },
+            "params": {
+                "enumOptions": {
+                    "1": "Αναλογικό",
+                    "2": "Ψηφιακό",
+                    "3": "Και τα δύο"
+                }
+            }
+        }
+    ],
+    "attributes": [
+        {
+            "id": "79",
+            "type": {
+                "id": "StringFreeShortText"
+            }
+        },
+        {
+            "id": "83",
+            "type": {
+                "id": "StringFreeShortText"
+            }
+        },
+        {
+            "id": "15",
+            "type": {
+                "id": "IntegerYesNo"
+            }
+        },
+        {
+            "id": "19",
+            "type": {
+                "id": "19"
+            }
+        }
+    ]
+}

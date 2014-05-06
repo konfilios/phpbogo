@@ -5,6 +5,7 @@
 namespace Bogo\Yii\DynSchema\Service;
 
 use \Bogo\DynSchema\Core\IAttribute;
+use \Bogo\DynSchema\Service\IEngine;
 use \Bogo\Yii\DynSchema\Core\Attribute;
 use \Bogo\Yii\DynSchema\Core\AttributeType;
 use \Bogo\Yii\DynSchema\Core\AttributeType\ListType;
@@ -17,7 +18,7 @@ use \Bogo\Yii\DynSchema\Core\AttributeType\ScalarType;
  * @package Components
  * @author Konstantinos Filios <konfilios@gmail.com>
  */
-class Service extends \CApplicationComponent
+class Engine extends \CApplicationComponent implements IEngine
 {
 	/**
 	 * List of static files to pre-load.
@@ -52,7 +53,7 @@ class Service extends \CApplicationComponent
 	 * @param mixed $label
 	 * @param array $spec
 	 */
-	public function registerAttributeTypeSpec($spec)
+	private function registerAttributeTypeSpec($spec)
 	{
 		// Extract signature
 		$signatureArray = $spec['signature'];
@@ -68,9 +69,27 @@ class Service extends \CApplicationComponent
 	 * @param mixed $id
 	 * @param array $spec
 	 */
-	public function registerAttributeSpec($id, $spec)
+	private function registerAttributeSpec($spec)
 	{
-		$this->_attributes[$id] = $spec;
+		$this->_attributes[$spec['id']] = $spec;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function registerSpec($spec)
+	{
+		if (isset($spec['attributeTypes'])) {
+			foreach ($spec['attributeTypes'] as $attrTypeSpec) {
+				$this->registerAttributeTypeSpec($attrTypeSpec);
+			}
+		}
+
+		if (isset($spec['attributes'])) {
+			foreach ($spec['attributes'] as $attrSpec) {
+				$this->registerAttributeSpec($attrSpec);
+			}
+		}
 	}
 
 	/**
@@ -80,11 +99,8 @@ class Service extends \CApplicationComponent
 	 */
 	public function loadSpecFile($filePath)
 	{
-		$specFile = json_decode(file_get_contents($filePath), true);
-
-		foreach ($specFile['attributeTypes'] as $attrSpec) {
-			$this->registerAttributeTypeSpec($attrSpec);
-		}
+		$spec = json_decode(file_get_contents($filePath), true);
+		$this->registerSpec($spec);
 	}
 
 	/**

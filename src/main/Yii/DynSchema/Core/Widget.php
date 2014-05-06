@@ -4,6 +4,7 @@
 
 namespace Bogo\Yii\DynSchema\Core;
 
+use \Bogo\Yii\DynSchema\Service\Engine;
 use \Bogo\Yii\DynSchema\Core\TBaseComponent;
 
 /**
@@ -18,11 +19,11 @@ abstract class Widget implements \Bogo\DynSchema\Core\IWidget
 	use TBaseComponent;
 
 	/**
-	 * Owner service.
+	 * Owner engine.
 	 *
-	 * @var Service 
+	 * @var Engine 
 	 */
-	private $service;
+	private $engine;
 
 	/**
 	 * Owner attribute.
@@ -45,9 +46,9 @@ abstract class Widget implements \Bogo\DynSchema\Core\IWidget
 	 */
 	public $htmlOptions = array();
 
-	public function __construct($service, $attribute, $spec)
+	public function __construct($engine, $attribute, $spec)
 	{
-		$this->service = $service;
+		$this->engine = $engine;
 		$this->attribute = $attribute;
 		$this->spec = $spec;
 	}

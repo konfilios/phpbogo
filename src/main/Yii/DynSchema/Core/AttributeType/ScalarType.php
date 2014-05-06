@@ -71,10 +71,10 @@ class ScalarType extends ElementaryType implements IScalar
 	/**
 	 * @inheritdoc
 	 */
-	public function __construct($service, $signatureArray)
+	public function __construct($engine, $signatureArray)
 	{
 		// Do standard construction
-		parent::__construct($service, $signatureArray);
+		parent::__construct($engine, $signatureArray);
 	}
 
 	/**
@@ -96,7 +96,7 @@ class ScalarType extends ElementaryType implements IScalar
 
 		if (isset($spec['superType'])) {
 			// Create instance of parent attribute type
-			$this->superType = $this->service->getAttributeType($spec['superType']);
+			$this->superType = $this->engine->getAttributeType($spec['superType']);
 
 			if (empty($this->valueDatatypeId)) {
 				$this->valueDatatypeId = $this->superType->getValueDatatypeId();

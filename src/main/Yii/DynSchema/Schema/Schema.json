@@ -25,11 +25,13 @@
 	],
 	"attributes": {
 		"1. 3D": {
+			"id" : "fake1",
 			"type" : {
 				"id": "Boolean"
 			}
 		},
 		"2. Αναλογικό - Ψηφιακό": {
+			"id" : "fake2",
 			"typeSignature" : {
 				"id": "IntegerAnalogDigital"
 			},
@@ -40,6 +42,7 @@
 			]
 		},
 		"3. Αναλογικό-Ψηφιακο": {
+			"id" : "fake3",
 			"type" : {
 				"id": "List",
 				"elementType": {
@@ -55,6 +58,7 @@
 			]
 		},
 		"4. Τάση Λειτουργίας": {
+			"id" : "fake4",
 			"type" : {
 				"id": "Vector2",
 				"elementType" : {

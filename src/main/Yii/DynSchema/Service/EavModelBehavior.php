@@ -4,9 +4,11 @@
 
 namespace Bogo\Yii\DynSchema\Service;
 
-use \Bogo\DynSchema\Service\IAttributeComponent;
-use \Bogo\DynSchema\Service\IAttributeSpecRepository;
-use \Bogo\DynSchema\Core\IValueCollectionType;
+use \Bogo\DynSchema\Core\IAttribute;
+use \Bogo\DynSchema\Core\AttributeType\ICollection;
+use \Bogo\DynSchema\Core\AttributeType\IScalar;
+use \Bogo\DynSchema\Service\ISpecRepository;
+use \Bogo\DynSchema\Service\IEngine;
 use \CActiveRecordBehavior;
 use \CActiveRecord;
 
@@ -24,11 +26,18 @@ use \CActiveRecord;
 class EavModelBehavior extends CActiveRecordBehavior
 {
 	/**
-	 * Attribute repository.
+	 * Spec repository.
 	 *
-	 * @var IAttributeSpecRepository
+	 * @var ISpecRepository
 	 */
-	public $attributeRepository;
+	public $specRepository;
+
+	/**
+	 * Engine.
+	 *
+	 * @var IEngine
+	 */
+	public $engine;
 
 	/**
 	 * Value storage table name per data type.
@@ -58,6 +67,16 @@ class EavModelBehavior extends CActiveRecordBehavior
 	}
 
 	/**
+	 * @param array $attrIds
+	 * @return IAttribute[]
+	 */
+	public function registerSpecForAttributeIds($attrIds)
+	{
+		$spec = $this->specRepository->getSchemaSpecByAttributeIds($attrIds);
+		$this->engine->registerSpec($spec);
+	}
+
+	/**
 	 * Get value corresponding to given attrId.
 	 * 
 	 * If no value is set for this attrId, the corresponding attributes
@@ -74,21 +93,18 @@ class EavModelBehavior extends CActiveRecordBehavior
 	/**
 	 * Insert single value of given attribute.
 	 *
-	 * @param \Bogo\DynSchema\IAttributeComponent $attr
+	 * @param \Bogo\DynSchema\Core\IAttribute $attr
 	 * @param mixed $value
 	 */
-	protected function insertValue(IAttributeComponent $attr, $value)
+	protected function insertValue($datatypeId, $attrId, $value)
 	{
-		// Get storage data type id of attribute
-		$datatypeId = $attr->getValueDatatypeId();
-
 		// Get table in which we store values of this datatype
 		$valueTable = $this->valueTables[$datatypeId];
 
 		// Insert value
 		$this->owner->dbConnection->createCommand()->insert($valueTable, array(
 			'ownerId' => $this->owner->id,
-			'attrId' => $attr->getId(),
+			'attrId' => $attrId,
 			'value' => $value
 		));
 	}
@@ -96,20 +112,24 @@ class EavModelBehavior extends CActiveRecordBehavior
 	/**
 	 * Persist value of given attribute.
 	 *
-	 * @param \Bogo\DynSchema\IAttributeComponent $attr
+	 * @param \Bogo\DynSchema\Core\IAttribute $attr
 	 * @param mixed $value
 	 */
-	protected function saveValue(IAttributeComponent $attr, $value)
+	protected function saveValue(IAttribute $attr, $value)
 	{
-		if ($attr->getValueCollectionTypeId() == IValueCollectionType::ID_NONE) {
-			// Single value
-			$this->insertValue($attr, $value);
+		$attrType = $attr->getType();
 
-		} else {
+		if ($attrType instanceof ICollection) {
 			// Array of values
 			foreach ($value as $valueElement) {
-				$this->insertValue($attr, $valueElement);
+				$this->insertValue($attrType->getElementType()->getValueDatatypeId(), $attr->getId(), $valueElement);
 			}
+
+		} else if ($attrType instanceof IScalar) {
+			// Single value
+			$this->insertValue($attrType->getValueDatatypeId(), $attr->getId(), $value);
+		} else {
+			throw new \Exception("Unhandled datatype ".$attrType->getSignatureString());
 		}
 	}
 
@@ -133,10 +153,13 @@ class EavModelBehavior extends CActiveRecordBehavior
 
 		// Get attribute ids we're interested in
 		$attrIds = array_keys($this->values);
+		$this->registerSpecForAttributeIds($attrIds);
 
 		// Go through all attributes
-		foreach ($this->attributeRepository->getAttributeSpecsByIds($attrIds) as $attr) {
-			$this->saveValue($attr, $this->values[$attr->getId()]);
+		foreach ($this->values as $attrId=>$value) {
+			$attr = $this->engine->getAttribute($attrId);
+
+			$this->saveValue($attr, $value);
 		}
 	}
 
@@ -168,18 +191,19 @@ class EavModelBehavior extends CActiveRecordBehavior
 
 		// Get attribute ids we're interested in
 		$attrIds = array_keys($selectedValues);
+		$this->registerSpecForAttributeIds($attrIds);
 
 		// Go through all attributes to tell which are collections and which not
 		$this->values = array();
-		foreach ($this->attributeRepository->getAttributeSpecsByIds($attrIds) as $attr) {
-			$attrId = $attr->getId();
+		foreach ($selectedValues as $attrId=>$selectedValueAsArray) {
+			$attr = $this->engine->getAttribute($attrId);
 
-			if ($attr->getValueCollectionTypeId() == IValueCollectionType::ID_NONE) {
+			if ($attr->getType() instanceof ICollection) {
 				// Not a collection. Use first element of selected value array
-				$this->values[$attrId] = $selectedValues[$attrId][0];
+				$this->values[$attrId] = $selectedValueAsArray[0];
 			} else {
 				// Collection. Use whole selected value array
-				$this->values[$attrId] = $selectedValues[$attrId];
+				$this->values[$attrId] = $selectedValueAsArray;
 			}
 		}
 	}

@@ -4,7 +4,7 @@
 
 namespace Bogo\Yii\DynSchema\Core;
 
-use Bogo\Yii\DynSchema\Service\Service;
+use Bogo\Yii\DynSchema\Service\Engine;
 use Bogo\DynSchema\Core\IAttribute;
 
 /**
@@ -24,11 +24,11 @@ class Attribute implements IAttribute
 	private $id;
 
 	/**
-	 * Owner service.
+	 * Owner engine.
 	 *
-	 * @var Service 
+	 * @var Engine 
 	 */
-	private $service;
+	private $engine;
 
 	/**
 	 * Attribute type.
@@ -51,16 +51,16 @@ class Attribute implements IAttribute
 	 */
 	private $scenarioSpecs = array();
 
-	public function __construct($service, $spec)
+	public function __construct($engine, $spec)
 	{
-		// Keep link to service
-		$this->service = $service;
+		// Keep link to engine
+		$this->engine = $engine;
 
 		// Copy id
 		$this->id = $spec['id'];
 
 		// Create instance of attribute type
-		$this->type = $this->service->getAttributeType($spec['type']);
+		$this->type = $this->engine->getAttributeType($spec['type']);
 
 		// Initialize default value
 		$this->defaultValue = isset($spec['defaultValue']) ? $spec['defaultValue'] : $this->type->getDefaultValue();
@@ -102,7 +102,7 @@ class Attribute implements IAttribute
 	{
 		if (isset($this->scenarioSpecs[$scenarioName])) {
 			// We have specs for this scenario, create widget
-			return $this->service->createWidget($this, $this->scenarioSpecs[$scenarioName]['widget']);
+			return $this->engine->createWidget($this, $this->scenarioSpecs[$scenarioName]['widget']);
 		} else {
 			// Delegate to our datatype
 			return $this->type->getWidget($this, $scenarioName);

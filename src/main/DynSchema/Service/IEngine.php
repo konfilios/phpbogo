@@ -7,21 +7,36 @@ namespace Bogo\DynSchema\Service;
 use \Bogo\DynSchema\Core\IAttribute;
 
 /**
- * DynSchema Service.
+ * DynSchema Engine.
  *
  * @since 2.0
  * @package Components
  * @author Konstantinos Filios <konfilios@gmail.com>
  */
-interface IService
+interface IEngine
 {
+	/**
+	 * Register a whole spec.
+	 * 
+	 * @param array $spec
+	 */
+	public function registerSpec($spec);
+
+	/**
+	 * Return attribute instance by id.
+	 *
+	 * @param string|integer $attrId
+	 * @return IAttribute
+	 * @throws Exception
+	 */
+	public function getAttribute($attrId);
 	/**
 	 * Create an attribute.
 	 *
 	 * @param array $spec
 	 * @return IAttribute
 	 */
-	public function createAttribute($spec);
+//	public function createAttribute($spec);
 
 	/**
 	 * Create an attribute type.
@@ -29,7 +44,7 @@ interface IService
 	 * @param array $spec
 	 * @return IAttributeType
 	 */
-	public function createAttributeType($spec);
+//	public function createAttributeType($spec);
 
 	/**
 	 * Create a presentation widget.

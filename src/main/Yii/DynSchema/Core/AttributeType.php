@@ -4,7 +4,7 @@
 
 namespace Bogo\Yii\DynSchema\Core;
 
-use \Bogo\Yii\DynSchema\Service\Service;
+use \Bogo\Yii\DynSchema\Service\Engine;
 use \Bogo\DynSchema\Core\IAttributeType;
 use \Bogo\DynSchema\Core\IAttribute;
 
@@ -18,11 +18,11 @@ use \Bogo\DynSchema\Core\IAttribute;
 abstract class AttributeType implements IAttributeType
 {
 	/**
-	 * Owner service.
+	 * Owner engine.
 	 *
-	 * @var Service 
+	 * @var Engine 
 	 */
-	protected $service;
+	protected $engine;
 
 	/**
 	 * Attribute type id.
@@ -40,12 +40,12 @@ abstract class AttributeType implements IAttributeType
 	/**
 	 * Construct according to signature.
 	 *
-	 * @param Service $service
+	 * @param Engine $engine
 	 * @param array $signatureArray
 	 */
-	public function __construct($service, $signatureArray)
+	public function __construct($engine, $signatureArray)
 	{
-		$this->service = $service;
+		$this->engine = $engine;
 
 		$this->id = $signatureArray['id'];
 	}
@@ -86,7 +86,7 @@ abstract class AttributeType implements IAttributeType
 //		var_export($this->getSignatureString());
 		// Try to fulfil request with our specs
 		if (isset($this->scenarioSpecs[$scenarioName])) {
-			return $this->service->createWidget($attribute, $this->scenarioSpecs[$scenarioName]['widget']);
+			return $this->engine->createWidget($attribute, $this->scenarioSpecs[$scenarioName]['widget']);
 		}
 		
 		// Delegate to super type

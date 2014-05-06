@@ -82,7 +82,7 @@ class ListType extends AttributeType implements ICollection
 	{
 		if ($this->elementType) {
 			$superSignatureArray = self::createSignatureArray($this, $this->elementType->getSuperType());
-			return $this->service->getAttributeType($superSignatureArray);
+			return $this->engine->getAttributeType($superSignatureArray);
 		} else {
 			return null;
 		}
@@ -91,14 +91,14 @@ class ListType extends AttributeType implements ICollection
 	/**
 	 * @inheritdoc
 	 */
-	public function __construct($service, $signatureArray)
+	public function __construct($engine, $signatureArray)
 	{
 //		echo "<pre>AttributeTypeList:\n";var_export($signatureArray);echo "</pre>";
 		// Do standard construction
-		parent::__construct($service, $signatureArray);
+		parent::__construct($engine, $signatureArray);
 
 		if (isset($signatureArray['elementType'])) {
-			$this->elementType = $this->service->getAttributeType($signatureArray['elementType']);
+			$this->elementType = $this->engine->getAttributeType($signatureArray['elementType']);
 		}
 //		echo "<pre>AttributeTypeList:\n";var_export($this->getSignatureArray());echo "</pre>";
 	}
